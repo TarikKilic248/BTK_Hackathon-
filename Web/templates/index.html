@@ -1,51 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Teacher</title>
-    <script>
-        // Tıklanan terimi mevcut input değerinin sonuna ekler
-        function insertTerm(term) {
-            var input = document.getElementById('math_term');
-            input.value += term; // Mevcut değeri koruyarak yeni terimi ekler
-        }
-    </script>
+    <title>Matematik Problemi Çözücü</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Matematik Öğretmeni</h1>
-    
-    <form action="/solve" method="POST">
-        <label for="math_term">Matematik teriminizi girin:</label>
-        <input type="text" id="math_term" name="math_term" required>
-        <button type="submit">Çözümü Göster</button>
-    </form>
+<body class="bg-gray-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6">
+        <h1 class="text-2xl font-bold text-center mb-8">Matematik Problemi Çözücü</h1>
+        
+        <div class="space-y-8">
+            <!-- Metin Girişi Formu -->
+            <form action="/solve" method="post" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">
+                        Matematik Problemi Yazın:
+                    </label>
+                    <textarea name="math_term" rows="4" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="Matematik problemini buraya yazın..."></textarea>
+                </div>
+                <button type="submit" 
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Çöz
+                </button>
+            </form>
 
-    <h2>Hızlı Seçim:</h2>
-    <!-- 1'den 9'a kadar sayılar -->
-    <button onclick="insertTerm('1')">1</button>
-    <button onclick="insertTerm('2')">2</button>
-    <button onclick="insertTerm('3')">3</button>
-    <button onclick="insertTerm('4')">4</button>
-    <button onclick="insertTerm('5')">5</button>
-    <button onclick="insertTerm('6')">6</button>
-    <button onclick="insertTerm('7')">7</button>
-    <button onclick="insertTerm('8')">8</button>
-    <button onclick="insertTerm('9')">9</button>
-    <button onclick="insertTerm('0')">0</button>
-    <!-- Matematiksel sembollerle butonlar -->
-    <button onclick="insertTerm(' = ')">=</button>
-    <button onclick="insertTerm(' + ')">+</button>
-    <button onclick="insertTerm(' − ')">−</button>
-    <button onclick="insertTerm(' × ')">×</button>
-    <button onclick="insertTerm(' ÷ ')">÷</button>
-    <button onclick="insertTerm(' ∫ ')">∫</button>
-    <button onclick="insertTerm(' d/dx ')">d/dx</button>
-    <button onclick="insertTerm(' log ')">log</button>
-    
-    {% if solution %}
-        <h2>Çözüm:</h2>
-        <p>{{ solution }}</p>
-    {% endif %}
+            <!-- Görüntü Yükleme Formu -->
+            <form action="/solve" method="post" enctype="multipart/form-data" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">
+                        Veya Görüntü Yükleyin:
+                    </label>
+                    <input type="file" name="math_image" accept="image/*" 
+                        class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"/>
+                </div>
+                <button type="submit" 
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Yükle ve Çöz
+                </button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
