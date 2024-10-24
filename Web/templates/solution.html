@@ -8,6 +8,7 @@
 <body>
     {% if solution %}
         <h2>Matematik Probleminin Çözümü</h2>
+        <h2>Çözüm yolları:</h2>
         <!-- solution'ı HTML olarak render etmek için safe filtresi kullanıyoruz -->
         <div>{{ solution|safe }}</div>
     {% endif %}
