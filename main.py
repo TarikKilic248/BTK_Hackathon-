@@ -1,0 +1,1 @@
+# ana programin calistigi yer
