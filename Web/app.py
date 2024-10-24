@@ -13,7 +13,7 @@ def index():
 @app.route('/solve', methods=['POST'])
 def solve():
     user_input = request.form['math_term']
-    api_key = "AIzaSyCUeZCNNOGu_HU1W7nbj-zbOELRW7ULyyg"
+    api_key = "Your gemini api key"
     gemini_api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
     
     payload = {
