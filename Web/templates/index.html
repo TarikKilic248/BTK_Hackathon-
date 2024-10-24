@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math Teacher</title>
+    <script>
+        // Tıklanan terimi mevcut input değerinin sonuna ekler
+        function insertTerm(term) {
+            var input = document.getElementById('math_term');
+            input.value += term; // Mevcut değeri koruyarak yeni terimi ekler
+        }
+    </script>
 </head>
 <body>
     <h1>Matematik Öğretmeni</h1>
@@ -13,6 +20,28 @@
         <input type="text" id="math_term" name="math_term" required>
         <button type="submit">Çözümü Göster</button>
     </form>
+
+    <h2>Hızlı Seçim:</h2>
+    <!-- 1'den 9'a kadar sayılar -->
+    <button onclick="insertTerm('1')">1</button>
+    <button onclick="insertTerm('2')">2</button>
+    <button onclick="insertTerm('3')">3</button>
+    <button onclick="insertTerm('4')">4</button>
+    <button onclick="insertTerm('5')">5</button>
+    <button onclick="insertTerm('6')">6</button>
+    <button onclick="insertTerm('7')">7</button>
+    <button onclick="insertTerm('8')">8</button>
+    <button onclick="insertTerm('9')">9</button>
+    <button onclick="insertTerm('0')">0</button>
+    <!-- Matematiksel sembollerle butonlar -->
+    <button onclick="insertTerm(' = ')">=</button>
+    <button onclick="insertTerm(' + ')">+</button>
+    <button onclick="insertTerm(' − ')">−</button>
+    <button onclick="insertTerm(' × ')">×</button>
+    <button onclick="insertTerm(' ÷ ')">÷</button>
+    <button onclick="insertTerm(' ∫ ')">∫</button>
+    <button onclick="insertTerm(' d/dx ')">d/dx</button>
+    <button onclick="insertTerm(' log ')">log</button>
     
     {% if solution %}
         <h2>Çözüm:</h2>
