@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Teacher</title>
+</head>
+<body>
+    <h1>Matematik Öğretmeni</h1>
+    
+    <form action="/solve" method="POST">
+        <label for="math_term">Matematik teriminizi girin:</label>
+        <input type="text" id="math_term" name="math_term" required>
+        <button type="submit">Çözümü Göster</button>
+    </form>
+    
+    {% if solution %}
+        <h2>Çözüm:</h2>
+        <p>{{ solution }}</p>
+    {% endif %}
+</body>
+</html>
