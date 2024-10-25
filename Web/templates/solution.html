@@ -1,33 +1,29 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Problem Çözümü</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6">
-        <h1 class="text-2xl font-bold text-center mb-8">Problem Çözümü</h1>
-        
-        {% if original_text %}
-        <div class="mb-8">
-            <h2 class="text-lg font-semibold mb-2">Orijinal Problem:</h2>
-            <div class="bg-gray-50 rounded p-4">
-                {{ original_text }}
-            </div>
-        </div>
-        {% endif %}
-        
-        <div class="mb-8">
-            <h2 class="text-lg font-semibold mb-2">Çözüm:</h2>
-            <div class="bg-gray-50 rounded p-4">
-                {{ solution|safe }}
-            </div>
-        </div>
-        
-        <a href="/" 
-           class="block text-center w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Yeni Problem Çöz
-        </a>
+  <head>
+    <title>Matematik Problemi Çözümü</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-gray-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div
+      class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6"
+    >
+      <h1 class="text-2xl font-bold text-center mb-8">Çözüm</h1>
+
+      <!-- Kullanıcıdan alınan orijinal metin -->
+      <p class="mb-4"><strong>Orijinal Problem:</strong> {{ original_text }}</p>
+
+      <!-- Çözüm HTML -->
+      <div class="bg-gray-100 p-4 rounded">{{ solution|safe }}</div>
+
+      <a
+        href="/"
+        class="mt-6 inline-block bg-indigo-600 text-white px-4 py-2 rounded"
+        >Yeni Problem Çöz</a
+      >
     </div>
-</body>
+  </body>
 </html>
