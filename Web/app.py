@@ -2,68 +2,66 @@ from flask import Flask, render_template, request
 import requests
 import markdown
 import easyocr
-
 import cv2
 import numpy as np
-import os
 
 app = Flask(__name__)
 
-# Global EasyOCR okuyucusu
+# Global EasyOCR reader
 reader = None
 
 def initialize_ocr():
-    """EasyOCR okuyucusunu başlat"""
+    """Initialize the EasyOCR reader."""
     global reader
     if reader is None:
-        # İngilizce ve Türkçe için okuyucu oluştur
+        # Create reader for English and Turkish
         reader = easyocr.Reader(['en', 'tr'])
     return reader
 
 def preprocess_image(image):
-    """Görüntüyü OCR için hazırla"""
-    # OpenCV formatına dönüştür
+    """Prepare the image for OCR."""
+    # Convert to OpenCV format
     nparr = np.frombuffer(image, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
-    # Griye çevir
+    # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
-    # Gürültüyü azalt
+    # Reduce noise
     denoised = cv2.fastNlMeansDenoising(gray)
     
-    # Kontrastı artır
+    # Increase contrast
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
     enhanced = clahe.apply(denoised)
     
-    # Eşikleme
+    # Thresholding
     _, binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
     return binary
 
 def extract_text_from_image(image_data):
-    """Görüntüden metin çıkar"""
+    """Extract text from the image."""
     try:
-        # Görüntüyü hazırla
+        # Prepare the image
         processed_image = preprocess_image(image_data)
         
-        # OCR okuyucusunu başlat
+        # Initialize the OCR reader
         reader = initialize_ocr()
         
-        # Metni çıkar
+        # Extract text
         results = reader.readtext(processed_image)
         
-        # Tüm metinleri birleştir
+        # Concatenate all text results
         text = ' '.join([result[1] for result in results])
         
         return text.strip()
     
     except Exception as e:
-        return f"OCR Hatası: {str(e)}"
+        return f"OCR Error: {str(e)}"
 
 def get_gemini_solution(text):
-    """Gemini API'den çözüm al"""
-    api_key = "Your gemini api key"
+    """Retrieve solution from the Gemini API."""
+    api_key = "Your gemini api key"  # Replace with your actual Gemini API key
     gemini_api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
     
     payload = {
@@ -71,7 +69,7 @@ def get_gemini_solution(text):
             {
                 "parts": [
                     {
-                        "text": f"Bu matematik problemini çöz ve adım adım açıkla: {text}"
+                        "text": f"Please solve this math problem step by step: {text}"
                     }
                 ]
             }
@@ -89,10 +87,10 @@ def get_gemini_solution(text):
             solution_md = data['candidates'][0]['content']['parts'][0]['text']
             return markdown.markdown(solution_md)
         else:
-            return f"API Hatası: {response.status_code}"
+            return f"API Error: {response.status_code}"
             
     except Exception as e:
-        return f"Bağlantı Hatası: {str(e)}"
+        return f"Connection Error: {str(e)}"
 
 @app.route('/')
 def index():
@@ -101,29 +99,29 @@ def index():
 @app.route('/solve', methods=['POST'])
 def solve():
     if 'math_image' in request.files:
-        # Görüntüden metin çıkar
+        # Extract text from the image
         image_file = request.files['math_image'].read()
         extracted_text = extract_text_from_image(image_file)
         
-        # Çözüm al
+        # Get the solution
         solution_html = get_gemini_solution(extracted_text)
         
         return render_template('solution.html', 
-                             solution=solution_html, 
-                             original_text=extracted_text)
+                               solution=solution_html, 
+                               original_text=extracted_text)
     
     elif 'math_term' in request.form:
-        # Doğrudan metin girişi
+        # Direct text input
         user_input = request.form['math_term']
         solution_html = get_gemini_solution(user_input)
         
         return render_template('solution.html', 
-                             solution=solution_html, 
-                             original_text=user_input)
+                               solution=solution_html, 
+                               original_text=user_input)
     
     else:
         return render_template('solution.html', 
-                             solution="Lütfen bir matematik problemi girin veya görüntü yükleyin.")
+                               solution="Please enter a math problem or upload an image.")
 
 if __name__ == '__main__':
     app.run(debug=True)

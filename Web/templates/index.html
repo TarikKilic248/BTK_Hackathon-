@@ -1,67 +1,215 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Matematik Problemi Çözücü</title>
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
     />
+    <script>
+      let isMicActive = false;
+      let isCameraActive = false;
+      let mediaStream = null;
+
+      function toggleMicrophone() {
+        const micButton = document.getElementById("voice_button");
+        isMicActive = !isMicActive;
+        if (isMicActive) {
+          micButton.classList.remove("bg-green-500");
+          micButton.classList.add("bg-red-500");
+          micButton.innerHTML = '<i class="fas fa-stop"></i>'; // Stop icon
+          startRecording();
+        } else {
+          micButton.classList.remove("bg-red-500");
+          micButton.classList.add("bg-green-500");
+          micButton.innerHTML = '<i class="fas fa-microphone"></i>'; // Mic icon
+          stopRecording();
+        }
+      }
+
+      function startRecording() {
+        console.log("Recording started...");
+        // Implement actual recording logic here
+      }
+
+      function stopRecording() {
+        console.log("Recording stopped.");
+        // Implement logic to process recorded audio here
+      }
+
+      async function toggleCamera() {
+        if (!isCameraActive) {
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          document.getElementById("camera_view").srcObject = mediaStream;
+          document.getElementById("camera_popup").classList.remove("hidden");
+          isCameraActive = true;
+        }
+      }
+
+      function closeCamera() {
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+        }
+        document.getElementById("camera_popup").classList.add("hidden");
+        isCameraActive = false;
+      }
+
+      function capturePhoto() {
+        console.log("Photo captured");
+        closeCamera();
+        // Add logic to send the photo to the server here
+      }
+
+      async function submitSolution() {
+        const mathTerm = document.getElementById("math_text").value;
+        const response = await fetch("/solve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ math_term: mathTerm }),
+        });
+        const data = await response.json();
+        document.getElementById("solution_text").innerText = data.solution;
+        document.getElementById("explanation_text").innerText =
+          data.explanation;
+        document.getElementById("video_1").src = data.videos[0];
+        document.getElementById("video_2").src = data.videos[1];
+        document.getElementById("video_3").src = data.videos[2];
+      }
+    </script>
   </head>
-  <body class="bg-gray-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+  <body class="bg-gray-100 min-h-screen py-12 px-4">
     <div
-      class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6"
+      class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6"
     >
-      <h1 class="text-2xl font-bold text-center mb-8">
+      <h1 class="text-2xl font-bold text-center mb-6">
         Matematik Problemi Çözücü
       </h1>
 
-      <div class="space-y-8">
-        <!-- Metin Girişi Formu -->
-        <form action="/solve" method="post" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">
-              Matematik Problemi Yazın:
-            </label>
-            <textarea
-              name="math_term"
-              rows="4"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              placeholder="Matematik problemini buraya yazın..."
-            ></textarea>
-          </div>
-          <button
-            type="submit"
-            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Çöz
-          </button>
-        </form>
+      <!-- Input Text Area -->
+      <div>
+        <textarea
+          id="math_text"
+          rows="3"
+          class="w-full p-2 rounded-md border"
+          placeholder="Problemi buraya yazın..."
+        ></textarea>
+      </div>
 
-        <!-- Görüntü Yükleme Formu -->
-        <form
-          action="/solve"
-          method="post"
-          enctype="multipart/form-data"
-          class="space-y-4"
+      <!-- Button Group -->
+      <div class="flex space-x-4 mt-4">
+        <!-- File Upload -->
+        <button
+          id="file_button"
+          onclick="document.getElementById('file_input').click()"
+          class="flex-1 bg-blue-500 text-white p-2 rounded-md"
         >
-          <div>
-            <label class="block text-sm font-medium text-gray-700">
-              Veya Görüntü Yükleyin:
-            </label>
-            <input
-              type="file"
-              name="math_image"
-              accept="image/*"
-              class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
-            />
-          </div>
+          <i class="fas fa-upload"></i> Dosya Yükle
+        </button>
+        <input id="file_input" type="file" accept=".jpg" class="hidden" />
+
+        <!-- Voice Button -->
+        <button
+          id="voice_button"
+          onclick="toggleMicrophone()"
+          class="flex-1 bg-green-500 text-white p-2 rounded-md"
+        >
+          <i class="fas fa-microphone"></i> Sesli Söyle
+        </button>
+
+        <!-- Camera Button -->
+        <button
+          id="camera_button"
+          onclick="toggleCamera()"
+          class="flex-1 bg-gray-500 text-white p-2 rounded-md"
+        >
+          <i class="fas fa-camera"></i> Fotoğraf Çek
+        </button>
+      </div>
+
+      <!-- Solution Button -->
+      <button
+        onclick="submitSolution()"
+        class="w-full mt-6 bg-blue-600 text-white p-3 rounded-md"
+      >
+        Çözüm Bul
+      </button>
+
+      <!-- Solution Display -->
+      <div
+        id="solution_display"
+        class="mt-8 bg-gray-50 p-4 rounded-md shadow-md"
+      >
+        <h2 class="text-lg font-semibold">Çözüm</h2>
+        <p id="solution_text">Burada çözüm görüntülenecek.</p>
+      </div>
+
+      <!-- Explanation -->
+      <div
+        id="explanation_display"
+        class="mt-6 bg-gray-50 p-4 rounded-md shadow-md"
+      >
+        <h3 class="text-lg font-semibold">Açıklama</h3>
+        <p id="explanation_text">Burada açıklama görüntülenecek.</p>
+      </div>
+
+      <!-- Videos -->
+      <div class="mt-6">
+        <h3 class="text-lg font-semibold">İlgili Videolar</h3>
+        <iframe
+          id="video_1"
+          width="100%"
+          height="200"
+          src=""
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+        <iframe
+          id="video_2"
+          width="100%"
+          height="200"
+          src=""
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+        <iframe
+          id="video_3"
+          width="100%"
+          height="200"
+          src=""
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+
+    <!-- Camera Popup -->
+    <div
+      id="camera_popup"
+      class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <video id="camera_view" autoplay class="w-full h-64"></video>
+        <div class="flex space-x-4 mt-4">
           <button
-            type="submit"
-            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            onclick="capturePhoto()"
+            class="bg-green-500 text-white p-2 rounded-md"
           >
-            Yükle ve Çöz
+            Fotoğraf Çek
           </button>
-        </form>
+          <button
+            onclick="closeCamera()"
+            class="bg-red-500 text-white p-2 rounded-md"
+          >
+            Kapat
+          </button>
+        </div>
       </div>
     </div>
   </body>
