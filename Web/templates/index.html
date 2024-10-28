@@ -163,18 +163,30 @@
 
       async function submitSolution() {
         const mathTerm = document.getElementById("math_text").value;
+
         const response = await fetch("/solve", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ math_term: mathTerm }),
         });
-        const data = await response.json();
-        document.getElementById("solution_text").innerText = data.solution;
-        document.getElementById("explanation_text").innerText =
-          data.explanation;
-        document.getElementById("video_1").src = data.videos[0];
-        document.getElementById("video_2").src = data.videos[1];
-        document.getElementById("video_3").src = data.videos[2];
+
+        if (response.ok) {
+          const data = await response.json();
+
+          // Çözümü ilgili alana yerleştirin
+          document.getElementById("solution_text").innerHTML = data.solution;
+
+          // Açıklamayı ilgili alana yerleştirin
+          document.getElementById("explanation_text").innerText =
+            data.explanation;
+
+          // Videoları ilgili iframe'lere yerleştirin
+          document.getElementById("video_1").src = data.videos[0];
+          document.getElementById("video_2").src = data.videos[1];
+          document.getElementById("video_3").src = data.videos[2];
+        } else {
+          console.error("Çözüm alınamadı:", await response.text());
+        }
       }
     </script>
   </head>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 import requests
 import markdown
 import easyocr
@@ -61,7 +61,7 @@ def extract_text_from_image(image_data):
 
 def get_gemini_solution(text):
     """Retrieve solution from the Gemini API."""
-    api_key = "Your gemini api key"  # Replace with your actual Gemini API key
+    api_key = "AIzaSyCUeZCNNOGu_HU1W7nbj-zbOELRW7ULyyg"  # Replace with your actual Gemini API key
     gemini_api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
     
     payload = {
@@ -99,29 +99,34 @@ def index():
 @app.route('/solve', methods=['POST'])
 def solve():
     if 'math_image' in request.files:
-        # Extract text from the image
+        # Resimden metin çıkarma
         image_file = request.files['math_image'].read()
         extracted_text = extract_text_from_image(image_file)
         
-        # Get the solution
+        # Çözüm alma
         solution_html = get_gemini_solution(extracted_text)
         
-        return render_template('solution.html', 
-                               solution=solution_html, 
-                               original_text=extracted_text)
+        # JSON formatında döndür
+        return jsonify({
+            "solution": solution_html,
+            "explanation": "Bu açıklama alanında gösterilecektir.",
+            "videos": ["https://sample-video1.com", "https://sample-video2.com", "https://sample-video3.com"]
+        })
     
-    elif 'math_term' in request.form:
-        # Direct text input
-        user_input = request.form['math_term']
+    elif 'math_term' in request.json:
+        # Kullanıcı metni doğrudan girdiyse
+        user_input = request.json['math_term']
         solution_html = get_gemini_solution(user_input)
         
-        return render_template('solution.html', 
-                               solution=solution_html, 
-                               original_text=user_input)
+        # JSON formatında döndür
+        return jsonify({
+            "solution": solution_html,
+            "explanation": "Bu açıklama alanında gösterilecektir.",
+            "videos": ["https://sample-video1.com", "https://sample-video2.com", "https://sample-video3.com"]
+        })
     
     else:
-        return render_template('solution.html', 
-                               solution="Please enter a math problem or upload an image.")
-
+        return jsonify({"error": "Lütfen bir matematik problemi girin veya bir resim yükleyin."}), 400
+    
 if __name__ == '__main__':
     app.run(debug=True)
