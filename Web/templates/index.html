@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Matematik Problemi Çözücü</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+
+    <script>
+      let isMicActive = false;
+      let isCameraActive = false;
+      let mediaStream = null;
+
+      let mediaRecorder;
+      let audioChunks = [];
+      let recordingTimeout;
+      let elapsedTime = 0;
+      let timerInterval;
+
+      function toggleMicrophonePopup() {
+        document.getElementById("microphone_popup").classList.toggle("hidden");
+      }
+
+      function toggleMicrophone() {
+        const micButton = document.getElementById("start_recording");
+        if (!isMicActive) {
+          micButton.classList.remove("bg-green-500");
+          micButton.classList.add("bg-red-500");
+          micButton.innerHTML = "Kaydı Durdur";
+          startRecording();
+        } else {
+          stopRecording();
+          micButton.classList.remove("bg-red-500");
+          micButton.classList.add("bg-green-500");
+          micButton.innerHTML = "Kaydı Başlat";
+        }
+      }
+
+      async function startRecording() {
+        audioChunks = [];
+        elapsedTime = 0;
+        updateTimerDisplay();
+
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          mediaRecorder = new MediaRecorder(mediaStream);
+
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            saveAudio();
+          };
+
+          mediaRecorder.start();
+          isMicActive = true;
+
+          // Başlatılan zamanlayıcı her saniye güncellensin
+          timerInterval = setInterval(() => {
+            elapsedTime++;
+            updateTimerDisplay();
+          }, 1000);
+
+          // 20 saniye sonra kaydı otomatik olarak durdur
+          recordingTimeout = setTimeout(() => {
+            stopRecording();
+          }, 20000);
+        } catch (error) {
+          console.error("Ses kaydedilemiyor:", error);
+        }
+      }
+
+      function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+          mediaRecorder.stop();
+        }
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+        }
+        clearInterval(timerInterval); // Zamanlayıcı durdurulsun
+        clearTimeout(recordingTimeout);
+        isMicActive = false;
+      }
+
+      function saveAudio() {
+        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        console.log("Kaydedilen ses:", audioUrl);
+
+        // Kaydedilen sesi sunucuya gönderme kodunu buraya ekleyebilirsiniz
+      }
+
+      function updateTimerDisplay() {
+        const timerDisplay = document.getElementById("timer_display");
+        timerDisplay.innerText = `Geçen Zaman: ${elapsedTime} / 20 saniye`;
+      }
+
+      function discardRecording() {
+        audioChunks = [];
+        elapsedTime = 0;
+        updateTimerDisplay();
+        toggleMicrophonePopup();
+      }
+
+      async function toggleCamera() {
+        if (!isCameraActive) {
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          document.getElementById("camera_view").srcObject = mediaStream;
+          document.getElementById("camera_popup").classList.remove("hidden");
+          isCameraActive = true;
+        }
+      }
+
+      function closeCamera() {
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+        }
+        document.getElementById("camera_popup").classList.add("hidden");
+        isCameraActive = false;
+      }
+
+      function capturePhoto() {
+        console.log("Photo captured");
+        closeCamera();
+        // Add logic to send the photo to the server here
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file && file.type === "image/jpeg") {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            document.getElementById("file_preview").src = e.target.result;
+            document
+              .getElementById("file_preview_container")
+              .classList.remove("hidden");
+          };
+          reader.readAsDataURL(file);
+        } else {
+          alert("Lütfen yalnızca .jpg formatında bir dosya seçin.");
+        }
+      }
+
+      function removeFilePreview() {
+        document.getElementById("file_preview").src = "";
+        document.getElementById("file_input").value = "";
+        document
+          .getElementById("file_preview_container")
+          .classList.add("hidden");
+      }
+
+      async function submitSolution() {
+        const mathTerm = document.getElementById("math_text").value;
+        const response = await fetch("/solve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ math_term: mathTerm }),
+        });
+        const data = await response.json();
+        document.getElementById("solution_text").innerText = data.solution;
+        document.getElementById("explanation_text").innerText =
+          data.explanation;
+        document.getElementById("video_1").src = data.videos[0];
+        document.getElementById("video_2").src = data.videos[1];
+        document.getElementById("video_3").src = data.videos[2];
+      }
+    </script>
+  </head>
+  <body class="bg-gray-100 min-h-screen py-12 px-4">
+    <div
+      class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6"
+    >
+      <h1 class="text-2xl font-bold text-center mb-6">
+        Matematik Problemi Çözücü
+      </h1>
+
+      <!-- Input Text Area -->
+      <div>
+        <textarea
+          id="math_text"
+          rows="3"
+          class="w-full p-2 rounded-md border"
+          placeholder="Problemi buraya yazın..."
+        ></textarea>
+      </div>
+
+      <!-- Button Group -->
+      <div class="flex space-x-4 mt-4">
+        <!-- File Upload -->
+        <button
+          id="file_button"
+          onclick="document.getElementById('file_input').click()"
+          class="flex-1 bg-blue-500 text-white p-2 rounded-md"
+        >
+          <i class="fas fa-upload"></i> Dosya Yükle
+        </button>
+        <input
+          id="file_input"
+          type="file"
+          accept=".jpg"
+          class="hidden"
+          onchange="handleFileSelect(event)"
+        />
+
+        <button
+          id="voice_button"
+          onclick="toggleMicrophonePopup()"
+          class="flex-1 bg-green-500 text-white p-2 rounded-md"
+        >
+          <i class="fas fa-microphone"></i> Sesli Söyle
+        </button>
+
+        <!-- Camera Button -->
+        <button
+          id="camera_button"
+          onclick="toggleCamera()"
+          class="flex-1 bg-gray-500 text-white p-2 rounded-md"
+        >
+          <i class="fas fa-camera"></i> Fotoğraf Çek
+        </button>
+      </div>
+
+      <!-- File Preview -->
+      <div
+        id="file_preview_container"
+        class="relative mt-4 hidden bg-gray-50 p-4 rounded-md shadow-md text-center"
+      >
+        <!-- Remove Button -->
+        <button
+          onclick="removeFilePreview()"
+          class="absolute top-2 right-2 text-red-500 text-xl"
+        >
+          &times;
+        </button>
+
+        <h3 class="text-lg font-semibold mb-2">Dosya Önizlemesi</h3>
+        <img
+          id="file_preview"
+          src=""
+          alt="Seçilen Dosya Önizlemesi"
+          class="mx-auto w-48 h-48 object-cover rounded-md"
+        />
+      </div>
+
+      <!-- Solution Button -->
+      <button
+        onclick="submitSolution()"
+        class="w-full mt-6 bg-blue-600 text-white p-3 rounded-md"
+      >
+        Çözüm Bul
+      </button>
+
+      <!-- Solution Display -->
+      <div
+        id="solution_display"
+        class="mt-8 bg-gray-50 p-4 rounded-md shadow-md"
+      >
+        <h2 class="text-lg font-semibold">Çözüm</h2>
+        <p id="solution_text">Burada çözüm görüntülenecek.</p>
+      </div>
+
+      <!-- Explanation -->
+      <div
+        id="explanation_display"
+        class="mt-6 bg-gray-50 p-4 rounded-md shadow-md"
+      >
+        <h3 class="text-lg font-semibold">Açıklama</h3>
+        <p id="explanation_text">Burada açıklama görüntülenecek.</p>
+      </div>
+
+      <!-- Videos -->
+      <div class="mt-6">
+        <h3 class="text-lg font-semibold">İlgili Videolar</h3>
+        <iframe
+          id="video_1"
+          width="100%"
+          height="200"
+          src=""
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+        <iframe
+          id="video_2"
+          width="100%"
+          height="200"
+          src=""
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+        <iframe
+          id="video_3"
+          width="100%"
+          height="200"
+          src=""
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+
+    <!-- Camera Popup -->
+    <div
+      id="camera_popup"
+      class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <video id="camera_view" autoplay class="w-full h-64"></video>
+        <div class="flex space-x-4 mt-4">
+          <button
+            onclick="capturePhoto()"
+            class="bg-green-500 text-white p-2 rounded-md"
+          >
+            Fotoğraf Çek
+          </button>
+          <button
+            onclick="closeCamera()"
+            class="bg-red-500 text-white p-2 rounded-md"
+          >
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Microphone Popup -->
+    <div
+      id="microphone_popup"
+      class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h3 class="text-lg font-semibold text-center mb-4">Sesli Kayıt</h3>
+        <div id="timer_display" class="text-center text-gray-700 mb-4">
+          Geçen Zaman: 0 / 20 saniye
+        </div>
+        <button
+          id="start_recording"
+          onclick="toggleMicrophone()"
+          class="w-full bg-green-500 text-white p-2 rounded-md mb-4"
+        >
+          Kaydı Başlat
+        </button>
+        <div class="flex space-x-4">
+          <button
+            onclick="saveAudio()"
+            class="bg-blue-500 text-white p-2 rounded-md w-1/2"
+          >
+            Kaydet
+          </button>
+          <button
+            onclick="discardRecording()"
+            class="bg-red-500 text-white p-2 rounded-md w-1/2"
+          >
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
