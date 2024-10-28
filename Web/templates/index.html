@@ -13,6 +13,23 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
     />
 
+    <style>
+      .math-symbol-btn {
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px 10px;
+        margin: 2px;
+        cursor: pointer;
+        font-size: 18px;
+        transition: background-color 0.2s;
+      }
+
+      .math-symbol-btn:hover {
+        background-color: #d9d9d9;
+      }
+    </style>
+
     <script>
       let isMicActive = false;
       let isCameraActive = false;
@@ -23,6 +40,23 @@
       let recordingTimeout;
       let elapsedTime = 0;
       let timerInterval;
+
+      let audioUrl;
+      let photoUrl;
+      let file;
+
+      function insertSymbol(symbol) {
+        const textarea = document.getElementById("math_text");
+        const cursorPos = textarea.selectionStart;
+
+        const textBefore = textarea.value.substring(0, cursorPos);
+        const textAfter = textarea.value.substring(cursorPos);
+        textarea.value = textBefore + symbol + textAfter;
+
+        textarea.selectionStart = cursorPos + symbol.length;
+        textarea.selectionEnd = cursorPos + symbol.length;
+        textarea.focus();
+      }
 
       function toggleMicrophonePopup() {
         document.getElementById("microphone_popup").classList.toggle("hidden");
@@ -94,10 +128,18 @@
 
       function saveAudio() {
         const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-        const audioUrl = URL.createObjectURL(audioBlob);
+        audioUrl = URL.createObjectURL(audioBlob);
         console.log("Kaydedilen ses:", audioUrl);
 
         // Kaydedilen sesi sunucuya gönderme kodunu buraya ekleyebilirsiniz
+
+        // Ses önizleme alanını göster
+        const audioPreview = document.getElementById("audio_preview");
+        audioPreview.src = audioUrl;
+        document
+          .getElementById("audio_preview_container")
+          .classList.remove("hidden");
+        document.getElementById("solution_preview").classList.remove("hidden");
       }
 
       function updateTimerDisplay() {
@@ -132,13 +174,29 @@
       }
 
       function capturePhoto() {
-        console.log("Photo captured");
+        const videoElement = document.getElementById("camera_view");
+        const canvas = document.createElement("canvas");
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        photoUrl = canvas.toDataURL("image/jpeg");
+
+        //Sunucuya fotoğraf gönderme kodu buraya eklenebilir Fotograf ile ilgili islemler buraya eklenebilir
+
+        // Fotoğraf önizleme alanını göster
+        const photoPreview = document.getElementById("photo_preview");
+        photoPreview.src = photoUrl;
+        document
+          .getElementById("photo_preview_container")
+          .classList.remove("hidden");
+        document.getElementById("solution_preview").classList.remove("hidden");
+
         closeCamera();
-        // Add logic to send the photo to the server here
       }
 
       function handleFileSelect(event) {
-        const file = event.target.files[0];
+        file = event.target.files[0];
         if (file && file.type === "image/jpeg") {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -161,31 +219,90 @@
           .classList.add("hidden");
       }
 
+      function removeAudioPreview() {
+        const audioPreviewContainer = document.getElementById(
+          "audio_preview_container"
+        );
+        audioPreviewContainer.classList.add("hidden");
+
+        // Eğer hem ses hem de fotoğraf önizlemesi kapatılmışsa genel önizleme alanını da gizle
+        if (
+          document
+            .getElementById("photo_preview_container")
+            .classList.contains("hidden")
+        ) {
+          document.getElementById("solution_preview").classList.add("hidden");
+        }
+      }
+
+      function removePhotoPreview() {
+        const photoPreviewContainer = document.getElementById(
+          "photo_preview_container"
+        );
+        photoPreviewContainer.classList.add("hidden");
+
+        // Eğer hem ses hem de fotoğraf önizlemesi kapatılmışsa genel önizleme alanını da gizle
+        if (
+          document
+            .getElementById("audio_preview_container")
+            .classList.contains("hidden")
+        ) {
+          document.getElementById("solution_preview").classList.add("hidden");
+        }
+      }
+
       async function submitSolution() {
+        // Girdi elemanlarını al
         const mathTerm = document.getElementById("math_text").value;
+        const fileInput = file;
+        const audio = audioUrl; // Ses URL'si veya Blob olarak kullanabilirsiniz
+        const photo = photoUrl; // Fotoğraf URL'si veya Blob olarak kullanabilirsiniz
 
-        const response = await fetch("/solve", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ math_term: mathTerm }),
-        });
+        // Gönderim verilerini hazırla
+        const formData = new FormData();
 
-        if (response.ok) {
-          const data = await response.json();
+        // Math Text varsa ekle
+        if (mathTerm) {
+          formData.append("math_term", mathTerm);
+        }
 
-          // Çözümü ilgili alana yerleştirin
-          document.getElementById("solution_text").innerHTML = data.solution;
+        // Dosya yüklendiyse ekle
+        if (fileInput) {
+          formData.append("file", fileInput);
+        }
 
-          // Açıklamayı ilgili alana yerleştirin
-          document.getElementById("explanation_text").innerText =
-            data.explanation;
+        // Ses kaydı varsa ekle
+        if (audioUrl) {
+          formData.append("audio", audio);
+        }
 
-          // Videoları ilgili iframe'lere yerleştirin
-          document.getElementById("video_1").src = data.videos[0];
-          document.getElementById("video_2").src = data.videos[1];
-          document.getElementById("video_3").src = data.videos[2];
-        } else {
-          console.error("Çözüm alınamadı:", await response.text());
+        // Fotoğraf çekildiyse ekle
+        if (photoUrl) {
+          formData.append("photo", photo);
+        }
+
+        try {
+          // Çözüm isteği gönder
+          const response = await fetch("/solve", {
+            method: "POST",
+            body: formData,
+          });
+
+          // Yanıt başarılıysa verileri ekrana yerleştir
+          if (response.ok) {
+            const data = await response.json();
+
+            document.getElementById("solution_text").innerHTML = data.solution;
+            document.getElementById("explanation_text").innerText =
+              data.explanation;
+            document.getElementById("video_1").src = data.videos[0];
+            document.getElementById("video_2").src = data.videos[1];
+            document.getElementById("video_3").src = data.videos[2];
+          } else {
+            console.error("Çözüm alınamadı:", await response.text());
+          }
+        } catch (error) {
+          console.error("Bir hata oluştu:", error);
         }
       }
     </script>
@@ -206,6 +323,22 @@
           class="w-full p-2 rounded-md border"
           placeholder="Problemi buraya yazın..."
         ></textarea>
+      </div>
+
+      <!-- Matematik Sembolleri -->
+      <div id="math_symbols" class="flex flex-wrap mt-2">
+        <button onclick="insertSymbol('√')" class="math-symbol-btn">√</button>
+        <button onclick="insertSymbol('∫')" class="math-symbol-btn">∫</button>
+        <button onclick="insertSymbol('π')" class="math-symbol-btn">π</button>
+        <button onclick="insertSymbol('θ')" class="math-symbol-btn">θ</button>
+        <button onclick="insertSymbol('∞')" class="math-symbol-btn">∞</button>
+        <button onclick="insertSymbol('Σ')" class="math-symbol-btn">Σ</button>
+        <button onclick="insertSymbol('Δ')" class="math-symbol-btn">Δ</button>
+        <button onclick="insertSymbol('≈')" class="math-symbol-btn">≈</button>
+        <button onclick="insertSymbol('≠')" class="math-symbol-btn">≠</button>
+        <button onclick="insertSymbol('≤')" class="math-symbol-btn">≤</button>
+        <button onclick="insertSymbol('≥')" class="math-symbol-btn">≥</button>
+        <button onclick="insertSymbol('∂')" class="math-symbol-btn">∂</button>
       </div>
 
       <!-- Button Group -->
@@ -264,6 +397,40 @@
           alt="Seçilen Dosya Önizlemesi"
           class="mx-auto w-48 h-48 object-cover rounded-md"
         />
+      </div>
+
+      <!-- Çözüm Önizleme Alanı -->
+      <div id="solution_preview" class="mt-4 hidden">
+        <!-- Ses Oynatıcı -->
+        <div id="audio_preview_container" class="relative mt-4 hidden">
+          <h3 class="text-lg font-semibold mb-2">Ses Kaydı Önizlemesi</h3>
+          <button
+            onclick="removeAudioPreview()"
+            class="absolute top-0 right-0 mt-2 mr-2 text-gray-600 hover:text-red-600"
+          >
+            ×
+          </button>
+          <audio id="audio_preview" controls class="w-full">
+            Tarayıcınız ses çalma desteklemiyor.
+          </audio>
+        </div>
+
+        <!-- Fotoğraf Önizlemesi -->
+        <div id="photo_preview_container" class="relative mt-4 hidden">
+          <h3 class="text-lg font-semibold mb-2">Fotoğraf Önizlemesi</h3>
+          <button
+            onclick="removePhotoPreview()"
+            class="absolute top-0 right-0 mt-2 mr-2 text-gray-600 hover:text-red-600"
+          >
+            ×
+          </button>
+          <img
+            id="photo_preview"
+            src=""
+            alt="Çekilen Fotoğraf Önizlemesi"
+            class="w-full h-48 object-cover rounded-md"
+          />
+        </div>
       </div>
 
       <!-- Solution Button -->
