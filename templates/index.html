@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Matematik Problemi Çözücü</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    </style>
+    <link rel="stylesheet" href="static/css/style.css"/>
+    
+    
+  </head>
+  <body class="bg-gray-100 min-h-screen py-12 px-4">
+    <div
+      class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6"
+    >
+      <h1 class="text-2xl font-bold text-center mb-6">
+        Matematik Problemi Çözücü
+      </h1>
+
+      <!-- Input Text Area -->
+      <div>
+        <textarea
+          id="math_text"
+          rows="3"
+          class="w-full p-2 rounded-md border"
+          placeholder="Problemi buraya yazın..."
+        ></textarea>
+      </div>
+
+      <!-- Matematik Sembolleri -->
+      <div id="math_symbols" class="flex flex-wrap mt-2">
+        <button onclick="insertSymbol('√')" class="math-symbol-btn">√</button>
+        <button onclick="insertSymbol('∫')" class="math-symbol-btn">∫</button>
+        <button onclick="insertSymbol('π')" class="math-symbol-btn">π</button>
+        <button onclick="insertSymbol('θ')" class="math-symbol-btn">θ</button>
+        <button onclick="insertSymbol('∞')" class="math-symbol-btn">∞</button>
+        <button onclick="insertSymbol('Σ')" class="math-symbol-btn">Σ</button>
+        <button onclick="insertSymbol('Δ')" class="math-symbol-btn">Δ</button>
+        <button onclick="insertSymbol('≈')" class="math-symbol-btn">≈</button>
+        <button onclick="insertSymbol('≠')" class="math-symbol-btn">≠</button>
+        <button onclick="insertSymbol('≤')" class="math-symbol-btn">≤</button>
+        <button onclick="insertSymbol('≥')" class="math-symbol-btn">≥</button>
+        <button onclick="insertSymbol('∂')" class="math-symbol-btn">∂</button>
+      </div>
+
+      <!-- Button Group -->
+      <div class="flex space-x-4 mt-4">
+        <!-- File Upload -->
+        <button
+          id="file_button"
+          onclick="document.getElementById('file_input').click()"
+          class="flex-1 bg-blue-500 text-white p-2 rounded-md"
+        >
+          <i class="fas fa-upload"></i> Dosya Yükle
+        </button>
+        <input
+          id="file_input"
+          type="file"
+          accept=".jpg"
+          class="hidden"
+          onchange="handleFileSelect(event)"
+        />
+
+        <button
+          id="voice_button"
+          onclick="toggleMicrophonePopup()"
+          class="flex-1 bg-green-500 text-white p-2 rounded-md"
+        >
+          <i class="fas fa-microphone"></i> Sesli Söyle
+        </button>
+
+        <!-- Camera Button -->
+        <button
+          id="camera_button"
+          onclick="toggleCamera()"
+          class="flex-1 bg-gray-500 text-white p-2 rounded-md"
+        >
+          <i class="fas fa-camera"></i> Fotoğraf Çek
+        </button>
+      </div>
+
+      <!-- File Preview -->
+      <div
+        id="file_preview_container"
+        class="relative mt-4 hidden bg-gray-50 p-4 rounded-md shadow-md text-center"
+      >
+        <!-- Remove Button -->
+        <button
+          onclick="removeFilePreview()"
+          class="absolute top-2 right-2 text-red-500 text-xl"
+        >
+          &times;
+        </button>
+
+        <h3 class="text-lg font-semibold mb-2">Dosya Önizlemesi</h3>
+        <img
+          id="file_preview"
+          src=""
+          alt="Seçilen Dosya Önizlemesi"
+          class="mx-auto w-48 h-48 object-cover rounded-md"
+        />
+      </div>
+
+      <!-- Çözüm Önizleme Alanı -->
+      <div id="solution_preview" class="mt-4 hidden">
+        <!-- Ses Oynatıcı -->
+        <div id="audio_preview_container" class="relative mt-4 hidden">
+          <h3 class="text-lg font-semibold mb-2">Ses Kaydı Önizlemesi</h3>
+          <button
+            onclick="removeAudioPreview()"
+            class="absolute top-0 right-0 mt-2 mr-2 text-gray-600 hover:text-red-600"
+          >
+            ×
+          </button>
+          <audio id="audio_preview" controls class="w-full">
+            Tarayıcınız ses çalma desteklemiyor.
+          </audio>
+        </div>
+
+        <!-- Fotoğraf Önizlemesi -->
+        <div id="photo_preview_container" class="relative mt-4 hidden">
+          <h3 class="text-lg font-semibold mb-2">Fotoğraf Önizlemesi</h3>
+          <button
+            onclick="removePhotoPreview()"
+            class="absolute top-0 right-0 mt-2 mr-2 text-gray-600 hover:text-red-600"
+          >
+            ×
+          </button>
+          <img
+            id="photo_preview"
+            src=""
+            alt="Çekilen Fotoğraf Önizlemesi"
+            class="w-full h-48 object-cover rounded-md"
+          />
+        </div>
+      </div>
+
+      <!-- Solution Button -->
+      <button
+        onclick="submitSolution()"
+        class="w-full mt-6 bg-blue-600 text-white p-3 rounded-md"
+      >
+        Çözüm Bul
+      </button>
+
+      <!-- Solution Display -->
+      <div
+        id="solution_display"
+        class="mt-8 bg-gray-50 p-4 rounded-md shadow-md"
+      >
+        <h2 class="text-lg font-semibold">Çözüm</h2>
+        <p id="solution_text">Burada çözüm görüntülenecek.</p>
+      </div>
+
+      <!-- Explanation -->
+      <div
+        id="explanation_display"
+        class="mt-6 bg-gray-50 p-4 rounded-md shadow-md"
+      >
+        <h3 class="text-lg font-semibold">Açıklama</h3>
+        <p id="explanation_text">Burada açıklama görüntülenecek.</p>
+      </div>
+
+      <!-- Videos -->
+      <div class="mt-6">
+        <h3 class="text-lg font-semibold">İlgili Videolar</h3>
+        <iframe
+          id="video_1"
+          width="100%"
+          height="200"
+          src=""
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+        <iframe
+          id="video_2"
+          width="100%"
+          height="200"
+          src=""
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+        <iframe
+          id="video_3"
+          width="100%"
+          height="200"
+          src=""
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+
+    <!-- Camera Popup -->
+    <div
+      id="camera_popup"
+      class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <video id="camera_view" autoplay class="w-full h-64"></video>
+        <div class="flex space-x-4 mt-4">
+          <button
+            onclick="capturePhoto()"
+            class="bg-green-500 text-white p-2 rounded-md"
+          >
+            Fotoğraf Çek
+          </button>
+          <button
+            onclick="closeCamera()"
+            class="bg-red-500 text-white p-2 rounded-md"
+          >
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Microphone Popup -->
+    <div
+      id="microphone_popup"
+      class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h3 class="text-lg font-semibold text-center mb-4">Sesli Kayıt</h3>
+        <div id="timer_display" class="text-center text-gray-700 mb-4">
+          Geçen Zaman: 0 / 20 saniye
+        </div>
+        <button
+          id="start_recording"
+          onclick="toggleMicrophone()"
+          class="w-full bg-green-500 text-white p-2 rounded-md mb-4"
+        >
+          Kaydı Başlat
+        </button>
+        <div class="flex space-x-4">
+          <button
+            onclick="saveAudio()"
+            class="bg-blue-500 text-white p-2 rounded-md w-1/2"
+          >
+            Kaydet
+          </button>
+          <button
+            onclick="discardRecording()"
+            class="bg-red-500 text-white p-2 rounded-md w-1/2"
+          >
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+    <script src="static/js/script.js"></script>
+  </body>
+  
+</html>

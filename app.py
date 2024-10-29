@@ -4,6 +4,8 @@ import markdown
 import easyocr
 import cv2
 import numpy as np
+import base64
+import re
 
 app = Flask(__name__)
 
@@ -21,6 +23,11 @@ def initialize_ocr():
 def preprocess_image(image):
     """Prepare the image for OCR."""
     # Convert to OpenCV format
+    if isinstance(image, str) and image.startswith('data:image'):
+        # Handle base64 encoded images
+        image = re.sub('^data:image/.+;base64,', '', image)
+        image = base64.b64decode(image)
+    
     nparr = np.frombuffer(image, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
@@ -98,35 +105,58 @@ def index():
 
 @app.route('/solve', methods=['POST'])
 def solve():
-    if 'math_image' in request.files:
-        # Resimden metin çıkarma
-        image_file = request.files['math_image'].read()
-        extracted_text = extract_text_from_image(image_file)
+    try:
+        # Check if the request contains form data
+        if request.files:
+            # Handle file upload
+            if 'file' in request.files:
+                image_file = request.files['file'].read()
+                extracted_text = extract_text_from_image(image_file)
+            else:
+                extracted_text = ""
+
+        # Handle form data
+        math_term = request.form.get('math_term', '')
         
-        # Çözüm alma
-        solution_html = get_gemini_solution(extracted_text)
-        
-        # JSON formatında döndür
+        # Handle photo data
+        photo = request.form.get('photo', '')
+        if photo and photo.startswith('data:image'):
+            photo_text = extract_text_from_image(photo)
+            math_term = f"{math_term} {photo_text}".strip()
+
+        # Handle audio data (placeholder for future implementation)
+        audio = request.form.get('audio', '')
+        if audio:
+            # Burada ses dosyasını işleyecek kod eklenebilir
+            # Örneğin: speech-to-text dönüşümü yapılabilir
+            pass
+
+        # Get final solution
+        if math_term:
+            solution_html = get_gemini_solution(math_term)
+        elif extracted_text:
+            solution_html = get_gemini_solution(extracted_text)
+        else:
+            return jsonify({"error": "No input provided"}), 400
+
+        # Return the solution
         return jsonify({
             "solution": solution_html,
             "explanation": "Bu açıklama alanında gösterilecektir.",
             "videos": ["https://sample-video1.com", "https://sample-video2.com", "https://sample-video3.com"]
         })
-    
-    elif 'math_term' in request.json:
-        # Kullanıcı metni doğrudan girdiyse
-        user_input = request.json['math_term']
-        solution_html = get_gemini_solution(user_input)
-        
-        # JSON formatında döndür
-        return jsonify({
-            "solution": solution_html,
-            "explanation": "Bu açıklama alanında gösterilecektir.",
-            "videos": ["https://sample-video1.com", "https://sample-video2.com", "https://sample-video3.com"]
-        })
-    
-    else:
-        return jsonify({"error": "Lütfen bir matematik problemi girin veya bir resim yükleyin."}), 400
-    
+
+    except Exception as e:
+        app.logger.error(f"Error in solve endpoint: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+def handle_audio_input(audio_data):
+    """
+    Process audio input and convert to text.
+    This is a placeholder for future implementation.
+    """
+    # Implement speech-to-text conversion here
+    return ""
+
 if __name__ == '__main__':
     app.run(debug=True)

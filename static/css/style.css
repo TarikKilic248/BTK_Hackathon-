@@ -1,0 +1,13 @@
+.math-symbol-btn {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px 10px;
+    margin: 2px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background-color 0.2s;
+}
+.math-symbol-btn:hover {
+    background-color: #d9d9d9;
+}
