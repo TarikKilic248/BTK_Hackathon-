@@ -76,7 +76,7 @@ def get_gemini_solution(text):
             {
                 "parts": [
                     {
-                        "text": f"Please solve this math problem step by step: {text}"
+                        "text": f"Lütfen bu problemi çözer misin adım adım: {text}"
                     }
                 ]
             }
