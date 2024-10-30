@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import base64
 import re
-
+import speech_recognition as sr
 app = Flask(__name__)
 
 # Global EasyOCR reader
@@ -45,6 +45,28 @@ def preprocess_image(image):
     _, binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
     return binary
+
+def extract_Text_from_waw(waw_data):
+    # Recognizer oluşturun
+    recognizer = sr.Recognizer()
+
+    # WAV dosyasını yükleyin
+    file_path = waw_data 
+
+    with sr.AudioFile(file_path) as source:
+        audio_data = recognizer.record(source)
+
+    # Ses verisini yazıya dökün
+    try:
+        text = recognizer.recognize_google(audio_data, language="tr-TR")  # Türkçe dilini seçiyoruz
+        print("Çözümlenen metin:", text)
+    except sr.UnknownValueError:
+        text="Ses anlaşılamadı."
+        print("Ses anlaşılamadı.")
+    except sr.RequestError as e:
+        text="Google API'sine ulaşılamadı."
+        print(f"Google API'sine ulaşılamadı: {e}")
+    return text
 
 def extract_text_from_image(image_data):
     """Extract text from the image."""
