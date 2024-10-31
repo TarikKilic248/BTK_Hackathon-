@@ -1,0 +1,23 @@
+<!-- templates/partials/camera_popup.html -->
+<div
+  id="camera_popup"
+  class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+>
+  <div class="bg-white p-6 rounded-lg shadow-lg">
+    <video id="camera_view" autoplay class="w-full h-64"></video>
+    <div class="flex space-x-4 mt-4">
+      <button
+        onclick="capturePhoto()"
+        class="bg-green-500 text-white p-2 rounded-md"
+      >
+        Fotoğraf Çek
+      </button>
+      <button
+        onclick="closeCamera()"
+        class="bg-red-500 text-white p-2 rounded-md"
+      >
+        Kapat
+      </button>
+    </div>
+  </div>
+</div>

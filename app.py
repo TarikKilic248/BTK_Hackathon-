@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request,send_from_directory
 import requests
 import markdown
 import easyocr
@@ -8,11 +8,52 @@ import base64
 import re
 import speech_recognition as sr # pip install SpeechRecognition
 from PIL import Image
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 
 # Global EasyOCR reader
 reader = None
+
+# Ses dosyalarının kaydedileceği dizin
+AUDIO_FOLDER = 'audios'
+app.config['AUDIO_FOLDER'] = AUDIO_FOLDER
+
+# Dizin yoksa oluştur
+os.makedirs(AUDIO_FOLDER, exist_ok=True)
+
+@app.route('/save-audio', methods=['POST'])
+def save_audio():
+    try:
+        if 'audio' not in request.files:
+            return jsonify({'success': False, 'error': 'Ses dosyası bulunamadı'})
+        
+        audio_file = request.files['audio']
+        if audio_file.filename == '':
+            return jsonify({'success': False, 'error': 'Dosya seçilmedi'})
+        
+        # Güvenli dosya adı oluştur
+        filename = secure_filename(audio_file.filename)
+        filepath = os.path.join(app.config['AUDIO_FOLDER'], filename)
+        
+        # Dosyayı kaydet
+        audio_file.save(filepath)
+        
+        return jsonify({
+            'success': True,
+            'filepath': filepath,
+            'filename': filename
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# Kaydedilen ses dosyalarına erişim için route
+@app.route('/audios/<filename>')
+def serve_audio(filename):
+    return send_from_directory(app.config['AUDIO_FOLDER'], filename)
+
 
 def initialize_ocr():
     """Initialize the EasyOCR reader."""

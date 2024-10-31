@@ -12,6 +12,128 @@ let audioUrl;
 let photoUrl;
 let file;
 
+
+async function startRecording() {
+  audioChunks = [];
+  elapsedTime = 0;
+  updateTimerDisplay();
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'audio/webm' // Web tarayıcıları genelde webm formatını destekler
+    });
+
+    mediaRecorder.ondataavailable = (event) => {
+      audioChunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      saveAudio();
+    };
+
+    mediaRecorder.start();
+    isMicActive = true;
+
+    timerInterval = setInterval(() => {
+      elapsedTime++;
+      updateTimerDisplay();
+    }, 1000);
+
+    recordingTimeout = setTimeout(() => {
+      stopRecording();
+    }, 20000);
+  } catch (error) {
+    console.error("Ses kaydedilemiyor:", error);
+  }
+}
+
+async function saveAudio() {
+  try {
+    // WebM formatındaki ses verilerini WAV formatına dönüştür
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    
+    // Dosya adı için timestamp oluştur
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const fileName = `recording-${timestamp}.wav`;
+    
+    // FormData oluştur
+    const formData = new FormData();
+    formData.append("audio", audioBlob, fileName);
+
+    // Backend'e gönder
+    const response = await fetch("/save-audio", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log("Ses kaydı başarıyla kaydedildi:", data.filepath);
+      
+      // Ses önizleme alanını güncelle ve göster
+      const audioPreview = document.getElementById("audio_preview");
+      audioPreview.src = `/audios/${data.filename}`;
+      document.getElementById("audio_preview_container").classList.remove("hidden");
+      document.getElementById("solution_preview").classList.remove("hidden");
+
+      // solve endpointine ses dosyası yolunu gönder
+      const solveFormData = new FormData();
+      solveFormData.append("audio_path", data.filepath);
+      
+      const solveResponse = await fetch("/solve", {
+        method: "POST",
+        body: solveFormData
+      });
+
+      const solveData = await solveResponse.json();
+      
+      // Çözüm sonuçlarını göster
+      if (solveData.solution) {
+        document.getElementById("solution_text").innerHTML = solveData.solution;
+        document.getElementById("explanation_text").innerText = solveData.explanation;
+        // Video önizlemelerini güncelle
+        if (solveData.videos) {
+          document.getElementById("video_1").src = solveData.videos[0];
+          document.getElementById("video_2").src = solveData.videos[1];
+          document.getElementById("video_3").src = solveData.videos[2];
+        }
+      }
+    } else {
+      console.error("Ses kaydı kaydedilemedi:", data.error);
+    }
+  } catch (error) {
+    console.error("Ses kaydı işlenirken hata oluştu:", error);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+    const tracks = mediaRecorder.stream.getTracks();
+    tracks.forEach(track => track.stop());
+  }
+  clearInterval(timerInterval);
+  clearTimeout(recordingTimeout);
+  isMicActive = false;
+}
+
+function discardRecording() {
+  stopRecording();
+  audioChunks = [];
+  elapsedTime = 0;
+  updateTimerDisplay();
+  document.getElementById("audio_preview_container").classList.add("hidden");
+  document.getElementById("solution_preview").classList.add("hidden");
+  toggleMicrophonePopup();
+}
+
+function updateTimerDisplay() {
+  const timerDisplay = document.getElementById("timer_display");
+  timerDisplay.innerText = `Geçen Zaman: ${elapsedTime} / 20 saniye`;
+}
+
 function insertSymbol(symbol) {
   const textarea = document.getElementById("math_text");
   const cursorPos = textarea.selectionStart;
@@ -59,68 +181,8 @@ function toggleMicrophone() {
   }
 }
 
-async function startRecording() {
-  audioChunks = [];
-  elapsedTime = 0;
-  updateTimerDisplay();
 
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-    });
-    mediaRecorder = new MediaRecorder(mediaStream);
 
-    mediaRecorder.ondataavailable = (event) => {
-      audioChunks.push(event.data);
-    };
-
-    mediaRecorder.onstop = () => {
-      saveAudio();
-    };
-
-    mediaRecorder.start();
-    isMicActive = true;
-
-    // Başlatılan zamanlayıcı her saniye güncellensin
-    timerInterval = setInterval(() => {
-      elapsedTime++;
-      updateTimerDisplay();
-    }, 1000);
-
-    // 20 saniye sonra kaydı otomatik olarak durdu
-    recordingTimeout = setTimeout(() => {
-      stopRecording();
-    }, 20000);
-  } catch (error) {
-    console.error("Ses kaydedilemiyor:", error);
-  }
-}
-
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== "inactive") {
-    mediaRecorder.stop();
-  }
-  if (mediaStream) {
-    mediaStream.getTracks().forEach((track) => track.stop());
-  }
-  clearInterval(timerInterval); // Zamanlayıcı durdurulsun
-  clearTimeout(recordingTimeout);
-  isMicActive = false;
-}
-
-function saveAudio() {
-  const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-  audioUrl = URL.createObjectURL(audioBlob);
-  console.log("Kaydedilen ses:", audioUrl);
-
-  // Kaydedilen sesi sunucuya gönderme kodunu buraya ekleyebilirsiniz
-
-  // Ses önizleme alanını göster
-  const audioPreview = document.getElementById("audio_preview");
-  audioPreview.src = audioUrl;
-  document.getElementById("audio_preview_container").classList.remove("hidden");
-  document.getElementById("solution_preview").classList.remove("hidden");
-}
 
 function updateTimerDisplay() {
   const timerDisplay = document.getElementById("timer_display");
