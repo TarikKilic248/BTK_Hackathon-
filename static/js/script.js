@@ -128,6 +128,21 @@ function discardRecording() {
   document.getElementById("solution_preview").classList.add("hidden");
   toggleMicrophonePopup();
 }
+function toggleMicrophone() {
+  const micButton = document.getElementById("start_recording");
+  if (!isMicActive) {
+    micButton.classList.remove("bg-green-500");
+    micButton.classList.add("bg-red-500");
+    micButton.innerHTML = "Kaydı Durdur";
+    startRecording();
+  } else {
+    stopRecording();
+    micButton.classList.remove("bg-red-500");
+    micButton.classList.add("bg-green-500");
+    micButton.innerHTML = "Kaydı Başlat";
+  }
+}
+
 
 function updateTimerDisplay() {
   const timerDisplay = document.getElementById("timer_display");
@@ -165,36 +180,23 @@ document.addEventListener("click", function (event) {
 function toggleMicrophonePopup() {
   document.getElementById("microphone_popup").classList.toggle("hidden");
 }
-
-function toggleMicrophone() {
-  const micButton = document.getElementById("start_recording");
-  if (!isMicActive) {
-    micButton.classList.remove("bg-green-500");
-    micButton.classList.add("bg-red-500");
-    micButton.innerHTML = "Kaydı Durdur";
-    startRecording();
-  } else {
-    stopRecording();
-    micButton.classList.remove("bg-red-500");
-    micButton.classList.add("bg-green-500");
-    micButton.innerHTML = "Kaydı Başlat";
-  }
-}
-
-
-
-
 function updateTimerDisplay() {
   const timerDisplay = document.getElementById("timer_display");
   timerDisplay.innerText = `Geçen Zaman: ${elapsedTime} / 20 saniye`;
 }
-
 function discardRecording() {
   audioChunks = [];
   elapsedTime = 0;
   updateTimerDisplay();
   toggleMicrophonePopup();
 }
+
+
+
+
+
+
+
 
 async function toggleCamera() {
   if (!isCameraActive) {
@@ -234,6 +236,9 @@ function capturePhoto() {
 
   closeCamera();
 }
+
+
+
 
 function handleFileSelect(event) {
   const file = event.target.files[0];
@@ -309,6 +314,8 @@ function removePhotoPreview() {
     document.getElementById("solution_preview").classList.add("hidden");
   }
 }
+
+
 
 async function submitSolution() {
   // Girdi elemanlarını al
