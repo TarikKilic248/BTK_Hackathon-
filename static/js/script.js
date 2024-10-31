@@ -183,6 +183,73 @@ function toggleMicrophone() {
 
 
 
+<<<<<<< HEAD
+=======
+    mediaRecorder.ondataavailable = (event) => {
+      audioChunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      saveAudio();
+    };
+
+    mediaRecorder.start();
+    isMicActive = true;
+
+    // Başlatılan zamanlayıcı her saniye güncellensin
+    timerInterval = setInterval(() => {
+      elapsedTime++;
+      updateTimerDisplay();
+    }, 1000);
+
+    // 20 saniye sonra kaydı otomatik olarak durdu
+    recordingTimeout = setTimeout(() => {
+      stopRecording();
+    }, 20000);
+  } catch (error) {
+    console.error("Ses kaydedilemiyor:", error);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+  }
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((track) => track.stop());
+  }
+  clearInterval(timerInterval); // Zamanlayıcı durdurulsun
+  clearTimeout(recordingTimeout);
+  isMicActive = false;
+}
+
+function saveAudio() {
+  const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+  audioUrl = URL.createObjectURL(audioBlob);
+  console.log("Kaydedilen ses:", audioUrl);
+
+  // FormData ile dosyayı 'file' anahtarıyla ekleyin
+  const formData = new FormData();
+  formData.append("file", audioBlob, "audio.wav");
+
+  fetch('/upload-audio', {
+    method: 'POST',
+    body: formData,
+  }).then(response => {
+    if (response.ok) {
+      console.log("Ses başarıyla yüklendi.");
+    } else {
+      console.error("Ses yüklenirken hata oluştu.");
+    }
+  });
+
+  // Ses önizleme alanını göster
+  const audioPreview = document.getElementById("audio_preview");
+  audioPreview.src = audioUrl;
+  document.getElementById("audio_preview_container").classList.remove("hidden");
+  document.getElementById("solution_preview").classList.remove("hidden");
+}
+>>>>>>> 8b2411af122e84a38d64d2b71d79f2782d181271
 
 function updateTimerDisplay() {
   const timerDisplay = document.getElementById("timer_display");
