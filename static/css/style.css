@@ -1,13 +1,49 @@
-.math-symbol-btn {
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 5px 10px;
-    margin: 2px;
-    cursor: pointer;
-    font-size: 18px;
-    transition: background-color 0.2s;
+/* .math-symbol-btn {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 10px;
+  margin: 2px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background-color 0.2s;
+} */
+
+/* Klavye butonu */
+#keyboardBtn {
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  background: #f0f0f0;
+  border: none;
+  display: inline-flex;
+  align-items: center;
 }
+
+/* Matematik Klavyesi Penceresi */
+#math_keyboard {
+  display: none;
+  position: absolute;
+  top: 280px; /* Klavye butonunun altında görünmesi için */
+  width: 220px;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+/* Matematik sembol butonları */
+.math-symbol-btn {
+  padding: 10px;
+  font-size: 20px;
+  cursor: pointer;
+  border: none;
+  background-color: #f9f9f9;
+}
+
 .math-symbol-btn:hover {
-    background-color: #d9d9d9;
+  background-color: #d9d9d9;
 }

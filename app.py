@@ -6,7 +6,8 @@ import cv2
 import numpy as np
 import base64
 import re
-import speech_recognition as sr
+import speech_recognition as sr # pip install SpeechRecognition
+
 app = Flask(__name__)
 
 # Global EasyOCR reader
