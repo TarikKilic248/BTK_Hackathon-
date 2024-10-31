@@ -59,6 +59,43 @@ function toggleMicrophone() {
   }
 }
 
+async function startRecording() {
+  audioChunks = [];
+  elapsedTime = 0;
+  updateTimerDisplay();
+
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+    });
+    mediaRecorder = new MediaRecorder(mediaStream);
+
+    mediaRecorder.ondataavailable = (event) => {
+      audioChunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      saveAudio();
+    };
+
+    mediaRecorder.start();
+    isMicActive = true;
+
+    // Başlatılan zamanlayıcı her saniye güncellensin
+    timerInterval = setInterval(() => {
+      elapsedTime++;
+      updateTimerDisplay();
+    }, 1000);
+
+    // 20 saniye sonra kaydı otomatik olarak durdu
+    recordingTimeout = setTimeout(() => {
+      stopRecording();
+    }, 20000);
+  } catch (error) {
+    console.error("Ses kaydedilemiyor:", error);
+  }
+}
+
 function stopRecording() {
   if (mediaRecorder && mediaRecorder.state !== "inactive") {
     mediaRecorder.stop();
