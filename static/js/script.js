@@ -113,7 +113,20 @@ function saveAudio() {
   audioUrl = URL.createObjectURL(audioBlob);
   console.log("Kaydedilen ses:", audioUrl);
 
-  // Kaydedilen sesi sunucuya gönderme kodunu buraya ekleyebilirsiniz
+  // FormData ile dosyayı 'file' anahtarıyla ekleyin
+  const formData = new FormData();
+  formData.append("file", audioBlob, "audio.wav");
+
+  fetch('/upload-audio', {
+    method: 'POST',
+    body: formData,
+  }).then(response => {
+    if (response.ok) {
+      console.log("Ses başarıyla yüklendi.");
+    } else {
+      console.error("Ses yüklenirken hata oluştu.");
+    }
+  });
 
   // Ses önizleme alanını göster
   const audioPreview = document.getElementById("audio_preview");
