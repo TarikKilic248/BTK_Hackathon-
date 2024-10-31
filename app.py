@@ -7,6 +7,7 @@ import numpy as np
 import base64
 import re
 import speech_recognition as sr # pip install SpeechRecognition
+from PIL import Image
 
 app = Flask(__name__)
 
@@ -23,14 +24,12 @@ def initialize_ocr():
 
 def preprocess_image(image):
     """Prepare the image for OCR."""
+    # Convert PIL image to NumPy array
+    if isinstance(image, Image.Image):  # Check if the input is a PIL image
+        image = np.array(image)
+
     # Convert to OpenCV format
-    if isinstance(image, str) and image.startswith('data:image'):
-        # Handle base64 encoded images
-        image = re.sub('^data:image/.+;base64,', '', image)
-        image = base64.b64decode(image)
-    
-    nparr = np.frombuffer(image, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    img = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # Convert RGB to BGR for OpenCV
     
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -72,6 +71,9 @@ def extract_Text_from_waw(waw_data):
 def extract_text_from_image(image_data):
     """Extract text from the image."""
     try:
+        # Convert the image_data to a NumPy array
+        image_data = np.array(image_data)  # Convert PIL image to NumPy array
+
         # Prepare the image
         processed_image = preprocess_image(image_data)
         
@@ -172,6 +174,13 @@ def solve():
     except Exception as e:
         app.logger.error(f"Error in solve endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/extract-text', methods=['POST'])
+def extract_text():
+    file = request.files['image']
+    image = Image.open(file.stream)
+    text = extract_text_from_image(image)
+    return jsonify({'text': text})
 
 def handle_audio_input(audio_data):
     """

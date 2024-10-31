@@ -137,8 +137,13 @@ function capturePhoto() {
 }
 
 function handleFileSelect(event) {
-  file = event.target.files[0];
-  if (file && file.type === "image/jpeg") {
+  const file = event.target.files[0];
+  if (
+    file &&
+    (file.type === "image/jpeg" ||
+      file.type === "image/jpg" ||
+      file.type === "image/png")
+  ) {
     const reader = new FileReader();
     reader.onload = (e) => {
       document.getElementById("file_preview").src = e.target.result;
@@ -147,8 +152,24 @@ function handleFileSelect(event) {
         .classList.remove("hidden");
     };
     reader.readAsDataURL(file);
+
+    // OCR işlemi için API'ye gönder
+    const formData = new FormData();
+    formData.append("image", file);
+
+    fetch("http://127.0.0.1:5000/extract-text", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("math_text").value = data.text;
+      })
+      .catch((error) => {
+        console.error("OCR API Hatası:", error);
+      });
   } else {
-    alert("Lütfen yalnızca .jpg formatında bir dosya seçin.");
+    alert("Lütfen yalnızca .jpg, .jpeg veya .png formatında bir dosya seçin.");
   }
 }
 
