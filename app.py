@@ -87,26 +87,26 @@ def preprocess_image(image):
     
     return binary
 
-@app.route('/upload-audio', methods=['POST'])
-def upload_audio():
-    audio_file = request.files['file']
-    file_path = "uploaded_audio.wav"
-    audio_file.save(file_path)
-
-    # extract_Text_from_wav işlevini çağırın
-    text = extract_Text_from_wav(file_path)
-    return {"text": text}
-
-def extract_Text_from_wav(file_path):
+def extract_Text_from_waw(waw_data):
+    # Recognizer oluşturun
     recognizer = sr.Recognizer()
+
+    # WAV dosyasını yükleyin
+    file_path = waw_data 
+
     with sr.AudioFile(file_path) as source:
         audio_data = recognizer.record(source)
+
+    # Ses verisini yazıya dökün
     try:
-        text = recognizer.recognize_google(audio_data, language="tr-TR")
+        text = recognizer.recognize_google(audio_data, language="tr-TR")  # Türkçe dilini seçiyoruz
+        print("Çözümlenen metin:", text)
     except sr.UnknownValueError:
-        text = "Ses anlaşılamadı."
-    except sr.RequestError:
-        text = "Google API'sine ulaşılamadı."
+        text="Ses anlaşılamadı."
+        print("Ses anlaşılamadı.")
+    except sr.RequestError as e:
+        text="Google API'sine ulaşılamadı."
+        print(f"Google API'sine ulaşılamadı: {e}")
     return text
 
 def extract_text_from_image(image_data):
