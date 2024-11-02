@@ -256,6 +256,7 @@ function handleFileSelect(event) {
   ) {
     const reader = new FileReader();
     reader.onload = (e) => {
+      // Önizleme görselini gösterme
       document.getElementById("file_preview").src = e.target.result;
       document
         .getElementById("file_preview_container")
@@ -282,6 +283,7 @@ function handleFileSelect(event) {
     alert("Lütfen yalnızca .jpg, .jpeg veya .png formatında bir dosya seçin.");
   }
 }
+
 
 function removeFilePreview() {
   document.getElementById("file_preview").src = "";

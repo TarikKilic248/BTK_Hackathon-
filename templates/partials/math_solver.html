@@ -53,6 +53,8 @@
       class="hidden"
       onchange="handleFileSelect(event)"
     />
+      
+
     <button
       id="voice_button"
       onclick="toggleMicrophonePopup()"
@@ -67,6 +69,10 @@
     >
       <i class="fas fa-camera"></i> Fotoğraf Çek
     </button>
+  </div>
+  <!-- Resim Önizleme ve OCR Sonuç Alanı -->
+  <div id="file_preview_container" class="hidden mt-4">
+    <img id="file_preview" src="#" alt="Fotoğraf önizlemesi" class="w-48 h-auto mb-4" />
   </div>
 
   <!-- Yeni Geometri Fotoğrafı Yükle Butonu -->
@@ -85,7 +91,7 @@
       class="hidden"
       onchange="handleGeometryPhotoSelect(event)"
     />
-    <input type="hidden" id="geometry_photo_url" name="geometry_photo_url" />
+    
 
     <button
       onclick="submitSolution()"
