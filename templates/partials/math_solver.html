@@ -69,14 +69,33 @@
     </button>
   </div>
 
-  <!-- Çözüm Gösterme -->
-  <button
-    onclick="submitSolution()"
-    class="w-full mt-6 bg-blue-600 text-white p-3 rounded-md"
-  >
-    Çözüm Bul
-  </button>
+  <!-- Yeni Geometri Fotoğrafı Yükle Butonu -->
+  <div class="mt-4">
+    <button
+      id="geometry_photo_button"
+      onclick="document.getElementById('geometry_photo_input').click()"
+      class="w-full bg-yellow-500 text-white p-2 rounded-md"
+    >
+      Geometri Fotoğrafı Yükle
+    </button>
+    <input
+      id="geometry_photo_input"
+      type="file"
+      accept=".jpg, .jpeg, .png"
+      class="hidden"
+      onchange="handleGeometryPhotoSelect(event)"
+    />
+    <input type="hidden" id="geometry_photo_url" name="geometry_photo_url" />
 
+    <button
+      onclick="submitSolution()"
+      class="w-full mt-2 bg-blue-600 text-white p-3 rounded-md"
+    >
+      Çözümü Bul
+    </button>
+  </div>
+
+  <!-- Çözüm Gösterme -->
   <div
     id="solution_display"
     class="mt-8 bg-gray-50 p-4 rounded-md shadow-md"

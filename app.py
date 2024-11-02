@@ -10,6 +10,11 @@ import speech_recognition as sr # pip install SpeechRecognition
 from PIL import Image
 from werkzeug.utils import secure_filename
 import os
+import os
+import google.generativeai as genai
+import json
+from gemini_question import gemini_create_document,send_problem_to_gemini,gemini_video_oneri
+import tempfile
 
 app = Flask(__name__)
 
@@ -132,9 +137,9 @@ def extract_text_from_image(image_data):
     except Exception as e:
         return f"OCR Error: {str(e)}"
 
-def get_gemini_solution(text):
+def get_gemini_solution(text,soru_metni):
     """Retrieve solution from the Gemini API."""
-    api_key = "AIzaSyCUeZCNNOGu_HU1W7nbj-zbOELRW7ULyyg"  # Replace with your actual Gemini API key
+    api_key = "AIzaSyANFGM-zwnIA56Bq4Q4CRe7oKexCuBkxm8"  # Replace with your actual Gemini API key
     gemini_api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
     
     payload = {
@@ -142,7 +147,7 @@ def get_gemini_solution(text):
             {
                 "parts": [
                     {
-                        "text": f"Lütfen bu problemi çözer misin adım adım: {text}"
+                        "text": f"{text} {soru_metni} "
                     }
                 ]
             }
@@ -169,6 +174,8 @@ def get_gemini_solution(text):
 def index():
     return render_template('index.html', solution=None)
 
+
+
 @app.route('/solve', methods=['POST'])
 def solve():
     try:
@@ -181,35 +188,42 @@ def solve():
             else:
                 extracted_text = ""
 
+        photo_path=None
         # Handle form data
         math_term = request.form.get('math_term', '')
+        photo_url = request.form.get('geometry_photo', '')
+
+        # Fotoğraf URL'si varsa dosyayı yükle
+        if photo_url:
+            photo_path = os.path.join(os.getcwd(), photo_url.strip('/'))
+            print("Foto yolu",photo_path)
+            
+
+        soru_metni="Lütfen bu problemi adım adım çözer misin ?"
         
-        # Handle photo data
-        photo = request.form.get('photo', '')
-        if photo and photo.startswith('data:image'):
-            photo_text = extract_text_from_image(photo)
-            math_term = f"{math_term} {photo_text}".strip()
-
-        # Handle audio data (placeholder for future implementation)
-        audio = request.form.get('audio', '')
-        if audio:
-            # Burada ses dosyasını işleyecek kod eklenebilir
-            # Örneğin: speech-to-text dönüşümü yapılabilir
-            pass
-
         # Get final solution
-        if math_term:
-            solution_html = get_gemini_solution(math_term)
+        if photo_path!=None:
+            print("Buraya girdi")
+            solution_html = send_problem_to_gemini(math_term,photo_path)
+            document_text = gemini_create_document("Geometri")
+            video_text = gemini_video_oneri("Geometri")
+        elif math_term:
+            print("Math term alanına girdi")
+            solution_html = get_gemini_solution(math_term,soru_metni)
+            document_text = gemini_create_document(math_term)
+            video_text = gemini_video_oneri(math_term)
         elif extracted_text:
             solution_html = get_gemini_solution(extracted_text)
         else:
             return jsonify({"error": "No input provided"}), 400
 
+        print(video_text)
         # Return the solution
         return jsonify({
             "solution": solution_html,
             "explanation": "Bu açıklama alanında gösterilecektir.",
-            "videos": ["https://sample-video1.com", "https://sample-video2.com", "https://sample-video3.com"]
+            "document": document_text,
+            "videos": video_text["youtube_videoları"]
         })
 
     except Exception as e:
@@ -230,6 +244,44 @@ def handle_audio_input(audio_data):
     """
     # Implement speech-to-text conversion here
     return ""
+
+
+
+
+
+
+
+# Geometri resmini yükleme
+
+UPLOAD_FOLDER = 'images'
+# Ensure the upload folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+@app.route('/upload_geometry_photo', methods=['POST'])
+def upload_geometry_photo():
+    try:
+        # Check if a file was included in the request
+        if 'geometry_photo' not in request.files:
+            return jsonify({"success": False, "error": "No file provided"}), 400
+
+        file = request.files['geometry_photo']
+        if file.filename == '':
+            return jsonify({"success": False, "error": "No selected file"}), 400
+
+        # Create a unique filename
+        filename = f"_1{file.filename}"
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+        # Save the file to the images folder
+        file.save(file_path)
+
+        # Return the file's URL path
+        file_url = f"/{UPLOAD_FOLDER}/{filename}"
+        return jsonify({"success": True, "url": file_url}), 200
+
+    except Exception as e:
+        print("Error saving file:", e)
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)

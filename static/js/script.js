@@ -144,6 +144,8 @@ function toggleMicrophone() {
 }
 
 
+
+
 function updateTimerDisplay() {
   const timerDisplay = document.getElementById("timer_display");
   timerDisplay.innerText = `Geçen Zaman: ${elapsedTime} / 20 saniye`;
@@ -190,6 +192,10 @@ function discardRecording() {
   updateTimerDisplay();
   toggleMicrophonePopup();
 }
+
+
+
+
 
 
 
@@ -316,13 +322,65 @@ function removePhotoPreview() {
 }
 
 
+// Global değişkeni tanımlıyoruz
+let geometryPhotoFile = null; 
+function handleGeometryPhotoSelect(event) {
+  const fileInput = event.target;
+  const file = fileInput.files[0]; // Get the selected file
+  
+  if (file) {
+      const formData = new FormData();
+      formData.append("geometry_photo", file);
+      console.log("Geometry Photo File:", geometryPhotoFile);
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+          const imagePreview = document.createElement("img");
+          imagePreview.src = e.target.result;
+          imagePreview.alt = "Geometry Photo Preview";
+          imagePreview.style.maxWidth = "100%";
+          imagePreview.style.marginTop = "10px";
+          imagePreview.style.border = "1px solid #ccc";
+          imagePreview.style.borderRadius = "5px";
+
+          const existingPreview = document.getElementById("geometry_photo_preview");
+          if (existingPreview) {
+              existingPreview.remove();
+          }
+
+          const previewContainer = document.createElement("div");
+          previewContainer.id = "geometry_photo_preview";
+          previewContainer.appendChild(imagePreview);
+          fileInput.parentNode.appendChild(previewContainer);
+      };
+
+      reader.readAsDataURL(file);
+      
+      fetch("/upload_geometry_photo", {
+          method: "POST",
+          body: formData,
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              const photoUrl = data.url; // Get the saved file URL
+              // Store or use the photo URL as needed
+              console.log("Photo saved at:", photoUrl);
+              geometryPhotoFile = photoUrl; // Global değişkene atıyoruz
+          } else {
+              console.error("Failed to upload photo");
+          }
+      })
+      .catch(error => console.error("Error:", error));
+  } else {
+      alert("Lütfen bir dosya seçin.");
+  }
+}
+
 
 async function submitSolution() {
   // Girdi elemanlarını al
   const mathTerm = document.getElementById("math_text").value;
-  const fileInput = file;
-  const audio = audioUrl; // Ses URL'si veya Blob olarak kullanabilirsiniz
-  const photo = photoUrl; // Fotoğraf URL'si veya Blob olarak kullanabilirsiniz
 
   // Gönderim verilerini hazırla
   const formData = new FormData();
@@ -332,21 +390,12 @@ async function submitSolution() {
     formData.append("math_term", mathTerm);
   }
 
-  // Dosya yüklendiyse ekle
-  if (fileInput) {
-    formData.append("file", fileInput);
+   // Geometry Photo varsa ekle
+  if (geometryPhotoFile) {
+    formData.append("geometry_photo", geometryPhotoFile);
+    alert(geometryPhotoFile+"yüklendi");
   }
-
-  // Ses kaydı varsa ekle
-  if (audioUrl) {
-    formData.append("audio", audio);
-  }
-
-  // Fotoğraf çekildiyse ekle
-  if (photoUrl) {
-    formData.append("photo", photo);
-  }
-
+  
   try {
     // Çözüm isteği gönder
     const response = await fetch("/solve", {
@@ -358,15 +407,23 @@ async function submitSolution() {
     if (response.ok) {
       const data = await response.json();
 
+      alert("Çözüm başarıyla gönderildi!");
+      
       // Doküman ve Videolar Bölümünü Göster
       document.getElementById("document_section").classList.remove("hidden");
       document.getElementById("videos_section").classList.remove("hidden");
 
       document.getElementById("solution_text").innerHTML = data.solution;
-      document.getElementById("explanation_text").innerText = data.explanation;
-      document.getElementById("video_1").src = data.videos[0];
-      document.getElementById("video_2").src = data.videos[1];
-      document.getElementById("video_3").src = data.videos[2];
+     
+      if (Array.isArray(data.videos) && data.videos.length > 0) {
+        document.getElementById("video_1").src = data.videos[0];
+        if (data.videos[2]) document.getElementById("video_1").src = data.videos[0];
+        if (data.videos[1]) document.getElementById("video_2").src = data.videos[1];
+        if (data.videos[2]) document.getElementById("video_3").src = data.videos[2];
+      } else {
+        console.log("Video önerileri mevcut değil.");
+      }
+      document.getElementById("document_text").innerHTML = data.document;
     } else {
       console.error("Çözüm alınamadı:", await response.text());
     }
