@@ -8,7 +8,8 @@
 
 `   `- Uygulamamız, kullanıcıların matematik problemlerini çözmelerine yardımcı olmak için çeşitli özellikler ve işlevler sunmaktadır. Bu özellikler, kullanıcının matematiksel soruları farklı yollarla uygulamaya yüklemesini ve çözümleri detaylı olarak anlamasını sağlamaktadır:
 
-![](Aspose.Words.d5b6856e-cb97-4cfe-bc0e-68bc693bca15.001.png)
+![Aspose Words d5b6856e-cb97-4cfe-bc0e-68bc693bca15 001](https://github.com/user-attachments/assets/daf004b0-37f7-4711-8968-5257068cc57b)
+
 
 `     `- **Girdi Seçenekleri**: Uygulama, kullanıcılara esneklik sağlayarak matematik problemlerini dört farklı yolla yükleme imkânı tanır:
 
@@ -30,7 +31,8 @@
 
 `   `Bu özellikler sayesinde uygulamamız, matematik problemlerini çözmek isteyen kullanıcılara kapsamlı bir çözüm platformu sağlamaktadır.
 
-![](Aspose.Words.d5b6856e-cb97-4cfe-bc0e-68bc693bca15.002.png)
+![Aspose Words d5b6856e-cb97-4cfe-bc0e-68bc693bca15 002](https://github.com/user-attachments/assets/3b825fe7-f9e8-4c5c-8568-8e4a6e99f67c)
+
 
 **3. Teknik Yapı:**
 
