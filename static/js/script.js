@@ -79,28 +79,43 @@ async function saveAudio() {
         .classList.remove("hidden");
       document.getElementById("solution_preview").classList.remove("hidden");
 
-      // solve endpointine ses dosyası yolunu gönder
-      const solveFormData = new FormData();
-      solveFormData.append("audio_path", data.filepath);
+      // Metne dönüştürme isteği gönder
+      const transcribeFormData = new FormData();
+      transcribeFormData.append("audio_path", data.filepath);
 
-      const solveResponse = await fetch("/solve", {
+      const transcribeResponse = await fetch("/transcribe-audio", {
         method: "POST",
-        body: solveFormData,
+        body: transcribeFormData,
       });
 
-      const solveData = await solveResponse.json();
+      const transcribeData = await transcribeResponse.json();
 
-      // Çözüm sonuçlarını göster
-      if (solveData.solution) {
-        document.getElementById("solution_text").innerHTML = solveData.solution;
-        document.getElementById("explanation_text").innerText =
-          solveData.explanation;
-        // Video önizlemelerini güncelle
-        if (solveData.videos) {
-          document.getElementById("video_1").src = solveData.videos[0];
-          document.getElementById("video_2").src = solveData.videos[1];
-          document.getElementById("video_3").src = solveData.videos[2];
+      if (transcribeData.success) {
+        // Çözüm için solve endpointine istek gönder
+        const solveFormData = new FormData();
+        solveFormData.append("math_term", transcribeData.text);
+
+        const solveResponse = await fetch("/solve", {
+          method: "POST",
+          body: solveFormData,
+        });
+
+        const solveData = await solveResponse.json();
+
+        // Çözüm sonuçlarını göster
+        if (solveData.solution) {
+          document.getElementById("solution_text").innerHTML = solveData.solution;
+          document.getElementById("explanation_text").innerText =
+            solveData.explanation;
+          // Video önizlemelerini güncelle
+          if (solveData.videos) {
+            document.getElementById("video_1").src = solveData.videos[0];
+            document.getElementById("video_2").src = solveData.videos[1];
+            document.getElementById("video_3").src = solveData.videos[2];
+          }
         }
+      } else {
+        console.error("Ses metne dönüştürülemedi:", transcribeData.error);
       }
     } else {
       console.error("Ses kaydı kaydedilemedi:", data.error);
@@ -126,10 +141,9 @@ function discardRecording() {
   audioChunks = [];
   elapsedTime = 0;
   updateTimerDisplay();
-  document.getElementById("audio_preview_container").classList.add("hidden");
-  document.getElementById("solution_preview").classList.add("hidden");
   toggleMicrophonePopup();
 }
+
 function toggleMicrophone() {
   const micButton = document.getElementById("start_recording");
   if (!isMicActive) {
@@ -181,16 +195,8 @@ document.addEventListener("click", function (event) {
 function toggleMicrophonePopup() {
   document.getElementById("microphone_popup").classList.toggle("hidden");
 }
-function updateTimerDisplay() {
-  const timerDisplay = document.getElementById("timer_display");
-  timerDisplay.innerText = `Geçen Zaman: ${elapsedTime} / 20 saniye`;
-}
-function discardRecording() {
-  audioChunks = [];
-  elapsedTime = 0;
-  updateTimerDisplay();
-  toggleMicrophonePopup();
-}
+
+
 
 async function toggleCamera() {
   if (!isCameraActive) {
@@ -211,6 +217,9 @@ function closeCamera() {
   isCameraActive = false;
 }
 
+
+
+
 function capturePhoto() {
   const videoElement = document.getElementById("camera_view");
   const canvas = document.createElement("canvas");
@@ -218,18 +227,43 @@ function capturePhoto() {
   canvas.height = videoElement.videoHeight;
   const context = canvas.getContext("2d");
   context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-  photoUrl = canvas.toDataURL("image/jpeg");
+  const photoUrl = canvas.toDataURL("image/jpeg");
 
-  //Sunucuya fotoğraf gönderme kodu buraya eklenebilir Fotograf ile ilgili islemler buraya eklenebilir
 
-  // Fotoğraf önizleme alanını göster
-  const photoPreview = document.getElementById("photo_preview");
-  photoPreview.src = photoUrl;
-  document.getElementById("photo_preview_container").classList.remove("hidden");
-  document.getElementById("solution_preview").classList.remove("hidden");
+// FormData oluşturun ve fotoğrafı ekleyin
+const formData = new FormData();
+formData.append("image", dataURLtoBlob(photoUrl), "photo.jpg");
 
+  fetch("http://127.0.0.1:5000/extract-text", {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      document.getElementById("math_text").value = data.text;
+    })
+    .catch((error) => {
+      console.error("OCR API Hatası:", error);
+    });
+    // Close the camera popup
   closeCamera();
+  } 
+  
+  // Base64 veri URL'sini Blob'a dönüştürmek için yardımcı fonksiyon
+function dataURLtoBlob(dataURL) {
+  const byteString = atob(dataURL.split(",")[1]);
+  const mimeString = dataURL.split(",")[0].split(":")[1].split(";")[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], { type: mimeString });
 }
+
+  
+
+
 
 function handleFileSelect(event) {
   const file = event.target.files[0];

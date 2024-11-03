@@ -11,11 +11,12 @@ from PIL import Image
 from werkzeug.utils import secure_filename
 import os
 import os
-import google.generativeai as genai #pip install google-generativeai
+import google.generativeai as genai
 import json
 from gemini_question import gemini_create_document,send_problem_to_gemini,gemini_video_oneri
 import tempfile
-
+import base64
+from io import BytesIO
 app = Flask(__name__)
 
 # Global EasyOCR reader
@@ -53,6 +54,32 @@ def save_audio():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    
+@app.route('/transcribe-audio', methods=['POST'])
+def transcribe_audio():
+    try:
+        if 'audio_path' not in request.form:
+            return jsonify({'success': False, 'error': 'Ses dosyası yolu bulunamadı'})
+        
+        audio_path = request.form['audio_path']
+        
+        # Ses dosyasını metne dönüştür
+        transcribed_text = extract_Text_from_waw(audio_path)
+        
+        if transcribed_text:
+            return jsonify({
+                'success': True,
+                'text': transcribed_text
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Ses metne dönüştürülemedi'
+            })
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 
 # Kaydedilen ses dosyalarına erişim için route
 @app.route('/audios/<filename>')
