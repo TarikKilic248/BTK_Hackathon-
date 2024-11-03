@@ -12,7 +12,6 @@ let audioUrl;
 let photoUrl;
 let file;
 
-
 async function startRecording() {
   audioChunks = [];
   elapsedTime = 0;
@@ -21,7 +20,7 @@ async function startRecording() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'audio/webm' // Web tarayıcıları genelde webm formatını destekler
+      mimeType: "audio/webm", // Web tarayıcıları genelde webm formatını destekler
     });
 
     mediaRecorder.ondataavailable = (event) => {
@@ -51,12 +50,12 @@ async function startRecording() {
 async function saveAudio() {
   try {
     // WebM formatındaki ses verilerini WAV formatına dönüştür
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-    
+    const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+
     // Dosya adı için timestamp oluştur
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const fileName = `recording-${timestamp}.wav`;
-    
+
     // FormData oluştur
     const formData = new FormData();
     formData.append("audio", audioBlob, fileName);
@@ -64,35 +63,38 @@ async function saveAudio() {
     // Backend'e gönder
     const response = await fetch("/save-audio", {
       method: "POST",
-      body: formData
+      body: formData,
     });
 
     const data = await response.json();
 
     if (data.success) {
       console.log("Ses kaydı başarıyla kaydedildi:", data.filepath);
-      
+
       // Ses önizleme alanını güncelle ve göster
       const audioPreview = document.getElementById("audio_preview");
       audioPreview.src = `/audios/${data.filename}`;
-      document.getElementById("audio_preview_container").classList.remove("hidden");
+      document
+        .getElementById("audio_preview_container")
+        .classList.remove("hidden");
       document.getElementById("solution_preview").classList.remove("hidden");
 
       // solve endpointine ses dosyası yolunu gönder
       const solveFormData = new FormData();
       solveFormData.append("audio_path", data.filepath);
-      
+
       const solveResponse = await fetch("/solve", {
         method: "POST",
-        body: solveFormData
+        body: solveFormData,
       });
 
       const solveData = await solveResponse.json();
-      
+
       // Çözüm sonuçlarını göster
       if (solveData.solution) {
         document.getElementById("solution_text").innerHTML = solveData.solution;
-        document.getElementById("explanation_text").innerText = solveData.explanation;
+        document.getElementById("explanation_text").innerText =
+          solveData.explanation;
         // Video önizlemelerini güncelle
         if (solveData.videos) {
           document.getElementById("video_1").src = solveData.videos[0];
@@ -112,7 +114,7 @@ function stopRecording() {
   if (mediaRecorder && mediaRecorder.state !== "inactive") {
     mediaRecorder.stop();
     const tracks = mediaRecorder.stream.getTracks();
-    tracks.forEach(track => track.stop());
+    tracks.forEach((track) => track.stop());
   }
   clearInterval(timerInterval);
   clearTimeout(recordingTimeout);
@@ -142,9 +144,6 @@ function toggleMicrophone() {
     micButton.innerHTML = "Kaydı Başlat";
   }
 }
-
-
-
 
 function updateTimerDisplay() {
   const timerDisplay = document.getElementById("timer_display");
@@ -193,17 +192,6 @@ function discardRecording() {
   toggleMicrophonePopup();
 }
 
-
-
-
-
-
-
-
-
-
-
-
 async function toggleCamera() {
   if (!isCameraActive) {
     mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -243,9 +231,6 @@ function capturePhoto() {
   closeCamera();
 }
 
-
-
-
 function handleFileSelect(event) {
   const file = event.target.files[0];
   if (
@@ -283,7 +268,6 @@ function handleFileSelect(event) {
     alert("Lütfen yalnızca .jpg, .jpeg veya .png formatında bir dosya seçin.");
   }
 }
-
 
 function removeFilePreview() {
   document.getElementById("file_preview").src = "";
@@ -323,64 +307,74 @@ function removePhotoPreview() {
   }
 }
 
-
 // Global değişkeni tanımlıyoruz
-let geometryPhotoFile = null; 
+let geometryPhotoFile = null;
 function handleGeometryPhotoSelect(event) {
   const fileInput = event.target;
   const file = fileInput.files[0]; // Get the selected file
-  
+
   if (file) {
-      const formData = new FormData();
-      formData.append("geometry_photo", file);
-      console.log("Geometry Photo File:", geometryPhotoFile);
-      const reader = new FileReader();
+    const formData = new FormData();
+    formData.append("geometry_photo", file);
+    console.log("Geometry Photo File:", geometryPhotoFile);
+    const reader = new FileReader();
 
-      reader.onload = function(e) {
-          const imagePreview = document.createElement("img");
-          imagePreview.src = e.target.result;
-          imagePreview.alt = "Geometry Photo Preview";
-          imagePreview.style.maxWidth = "100%";
-          imagePreview.style.marginTop = "10px";
-          imagePreview.style.border = "1px solid #ccc";
-          imagePreview.style.borderRadius = "5px";
+    reader.onload = function (e) {
+      const imagePreview = document.createElement("img");
+      imagePreview.src = e.target.result;
+      imagePreview.alt = "Geometry Photo Preview";
+      imagePreview.style.maxWidth = "100%";
+      imagePreview.style.marginTop = "10px";
+      imagePreview.style.border = "1px solid #ccc";
+      imagePreview.style.borderRadius = "5px";
 
-          const existingPreview = document.getElementById("geometry_photo_preview");
-          if (existingPreview) {
-              existingPreview.remove();
-          }
+      const existingPreview = document.getElementById("geometry_photo_preview");
+      if (existingPreview) {
+        existingPreview.remove();
+      }
 
-          const previewContainer = document.createElement("div");
-          previewContainer.id = "geometry_photo_preview";
-          previewContainer.appendChild(imagePreview);
-          fileInput.parentNode.appendChild(previewContainer);
-      };
+      const previewContainer = document.createElement("div");
+      previewContainer.id = "geometry_photo_preview";
+      previewContainer.appendChild(imagePreview);
+      fileInput.parentNode.appendChild(previewContainer);
+    };
 
-      reader.readAsDataURL(file);
-      
-      fetch("/upload_geometry_photo", {
-          method: "POST",
-          body: formData,
+    reader.readAsDataURL(file);
+
+    fetch("/upload_geometry_photo", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const photoUrl = data.url; // Get the saved file URL
+          // Store or use the photo URL as needed
+          console.log("Photo saved at:", photoUrl);
+          geometryPhotoFile = photoUrl; // Global değişkene atıyoruz
+        } else {
+          console.error("Failed to upload photo");
+        }
       })
-      .then(response => response.json())
-      .then(data => {
-          if (data.success) {
-              const photoUrl = data.url; // Get the saved file URL
-              // Store or use the photo URL as needed
-              console.log("Photo saved at:", photoUrl);
-              geometryPhotoFile = photoUrl; // Global değişkene atıyoruz
-          } else {
-              console.error("Failed to upload photo");
-          }
-      })
-      .catch(error => console.error("Error:", error));
+      .catch((error) => console.error("Error:", error));
   } else {
-      alert("Lütfen bir dosya seçin.");
+    alert("Lütfen bir dosya seçin.");
   }
 }
 
+function showLoadingScreen() {
+  document.getElementById("loading_screen").classList.remove("hidden");
+}
+
+function hideLoadingScreen() {
+  document.getElementById("loading_screen").classList.add("hidden");
+}
 
 async function submitSolution() {
+  // Show loading spinner
+  const loadingSpinner = document.getElementById("loading_spinner");
+  loadingSpinner.classList.remove("hidden");
+
   // Girdi elemanlarını al
   const mathTerm = document.getElementById("math_text").value;
 
@@ -392,12 +386,12 @@ async function submitSolution() {
     formData.append("math_term", mathTerm);
   }
 
-   // Geometry Photo varsa ekle
+  // Geometry Photo varsa ekle
   if (geometryPhotoFile) {
     formData.append("geometry_photo", geometryPhotoFile);
-    alert(geometryPhotoFile+"yüklendi");
+    alert(geometryPhotoFile + " yüklendi");
   }
-  
+
   try {
     // Çözüm isteği gönder
     const response = await fetch("/solve", {
@@ -410,18 +404,19 @@ async function submitSolution() {
       const data = await response.json();
 
       alert("Çözüm başarıyla gönderildi!");
-      
+
       // Doküman ve Videolar Bölümünü Göster
       document.getElementById("document_section").classList.remove("hidden");
       document.getElementById("videos_section").classList.remove("hidden");
 
       document.getElementById("solution_text").innerHTML = data.solution;
-     
+
       if (Array.isArray(data.videos) && data.videos.length > 0) {
         document.getElementById("video_1").src = data.videos[0];
-        if (data.videos[2]) document.getElementById("video_1").src = data.videos[0];
-        if (data.videos[1]) document.getElementById("video_2").src = data.videos[1];
-        if (data.videos[2]) document.getElementById("video_3").src = data.videos[2];
+        if (data.videos[1])
+          document.getElementById("video_2").src = data.videos[1];
+        if (data.videos[2])
+          document.getElementById("video_3").src = data.videos[2];
       } else {
         console.log("Video önerileri mevcut değil.");
       }
@@ -431,5 +426,9 @@ async function submitSolution() {
     }
   } catch (error) {
     console.error("Bir hata oluştu:", error);
+  } finally {
+    // Hide loading spinner
+    loadingSpinner.classList.add("hidden");
   }
 }
+

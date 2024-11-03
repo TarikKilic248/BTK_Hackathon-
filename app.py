@@ -11,7 +11,7 @@ from PIL import Image
 from werkzeug.utils import secure_filename
 import os
 import os
-import google.generativeai as genai
+import google.generativeai as genai #pip install google-generativeai
 import json
 from gemini_question import gemini_create_document,send_problem_to_gemini,gemini_video_oneri
 import tempfile

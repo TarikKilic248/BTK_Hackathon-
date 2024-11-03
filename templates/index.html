@@ -1,12 +1,15 @@
 <!-- templates/index.html -->
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
 
-{% block content %}
 <div class="flex flex-col lg:flex-row justify-center gap-10">
-  {% include "partials/document_section.html" %}
-  {% include "partials/math_solver.html" %}
-  {% include "partials/videos_section.html" %}
+  {% include "partials/document_section.html" %} {% include
+  "partials/math_solver.html" %} {% include "partials/videos_section.html" %}
 </div>
-{% include "partials/camera_popup.html" %}
-{% include "partials/microphone_popup.html" %}
-{% endblock %}
+
+<!-- Loading Spinner -->
+<div id="loading_spinner" class="hidden">
+  <div class="spinner"></div>
+  <p>Loading...</p>
+</div>
+{% include "partials/camera_popup.html" %} {% include
+"partials/microphone_popup.html" %} {% endblock %}
